@@ -13,8 +13,15 @@ class Light(Ray):
             return ipt
         else:
             return None
-    
 
+    def postLightSource(self, interface, inpoint):
+       norm_slope = -1.0 / interface.slope() 
+       norm_vector = geometry.Vector.fromRadius(math.atan(norm_slope))
+       light_vector = self.direct
+       if light_vector.angle(norm_vector) > 3.14 / 2:
+           norm_vector = geometry.Vector.fromRadius(math.atan(norm_slope) + 3.14)
+
+        
 class Interface(LineSeg):
     def __init__(self, up_refidx = 1.0, down_refidx = 1.0, pt1 = Point(0,0), pt2 = Point(1,1)):
         self.up_refidx = up_refidx

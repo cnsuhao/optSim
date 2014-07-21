@@ -11,8 +11,13 @@ class Point:
     def distance(self, pt):
         return math.sqrt((pt.x - self.x) ** 2 + (pt.y - self.y) ** 2)
 
-    def prt(self):
-        print "Point: <%d, %d>" %(self.x, self.y) 
+    def __str__(self):
+        str = "Point: <%s, %s>" %(self.x, self.y) 
+        return str
+
+    def __repr__(self):
+        str = "Point: <%s, %s>" %(self.x, self.y) 
+        return str
 
 class Vector:
     def __init__(self, u = 1.0, v = 0.0):
@@ -26,14 +31,32 @@ class Vector:
         return Vector(self.u - other.u, self.v - other.v)
 
     def __mul__(self, other):
-        return Vector(self.u * other.u, self.v * other.v)
+        if isinstance(other, Vector):   # dot mul
+            return self.u * other.u + self.v * other.v
+        else:
+            return Vector(self.u * other, self.v * other)
 
-    def angle(self):    # radius
+    def toRadius(self):    
         return math.atan2(self.u, self.v)
 
-    def prt(self):
-        print "Vector: <0, 0> --> <", self.u, ", ", self.v, ">" 
+    @staticmethod
+    def fromRadius(radius):
+        return Vector(math.cos(radius), math.sin(radius))
 
+    def mod(self):
+        return Point(self.u, self.v).distance(Point(0, 0))
+
+    def angle(self, vec):
+        cos_val = self.__mul__(vec) / (self.mod() * vec.mod())
+        return math.acos(cos_val)
+
+    def __str__(self):
+        str = "Vector: --> <%s, %s>" %(self.u, self.v)
+        return str
+
+    def __repr__(self):
+        str = "Vector: --> <%s, %s>" %(self.u, self.v)
+        return str
 
 class Ray:
     def __init__(self, org = Point(0, 0), dirt = Vector()):
@@ -44,9 +67,13 @@ class Ray:
         end_point = self.origin.shift(self.direct)
         return Line(self.origin, end_point)
 
-    def prt(self):
-        print "Ray: <%d, %d> (%d) -->" %(self.origin.x, self.origin.y, self.direct)
+    def __str__(self):
+        str = "Ray: <%s, %s> (%s) -->" %(self.origin.x, self.origin.y, self.direct)
+        return str
     
+    def __repr__(self):
+        str = "Ray: <%s, %s> (%s) -->" %(self.origin.x, self.origin.y, self.direct)
+        return str
 
 class Line:
     def __init__(self, pt1 = Point(0, 0), pt2 = Point(1, 1)):
@@ -71,8 +98,13 @@ class Line:
     def slope(self):
         return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
 
-    def prt(self):
-        pass
+    def __str__(self):
+        str = "Line: -- <%s, %s> -- <%s, %s> --" %(self.point1.x, self.point1.y, self.point2.x, self.point2.y)
+        return str
+
+    def __repr__(self):
+        str = "Line: -- <%s, %s> -- <%s, %s> --" %(self.point1.x, self.point1.y, self.point2.x, self.point2.y)
+        return str
 
 
 class LineSeg:
@@ -96,7 +128,11 @@ class LineSeg:
     def toLine(self):
         return Line(self.start, self.end)
 
-    def prt(self):
-        print "Line Segment: <%d, %d> -- <%d, %d>" %(self.start.x, self.start.y, self.end.x, self.end.y)
+    def __str__(self):
+        str = "Line Segment: <%s, %s> -- <%s, %s>" %(self.start.x, self.start.y, self.end.x, self.end.y)
+        return str
 
+    def __repr__(self):
+        str = "Line Segment: <%s, %s> -- <%s, %s>" %(self.start.x, self.start.y, self.end.x, self.end.y)
+        return str
 
