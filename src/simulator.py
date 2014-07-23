@@ -1,3 +1,9 @@
+'''
+Created on Jul 23, 2014
+
+@author: andy
+'''
+
 import geometry
 import objects
 
