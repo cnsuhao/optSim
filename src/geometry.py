@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 '''
 Created on Jul 23, 2014
 
@@ -7,7 +8,18 @@ Description:
     The radian range is [0, 2pi)
 
 '''
+
 import math
+
+def regulateRadian(rad):
+    r = rad
+    while not (r >= 0 and r < math.pi * 2):
+        if r < 0:
+            r += math.pi * 2
+        else:
+            r -= math.pi * 2
+            
+    return r
 
 class Point:
     x = 0.0
@@ -24,7 +36,10 @@ class Point:
         return math.sqrt((pt.x - self.x) ** 2 + (pt.y - self.y) ** 2)
 
     def __eq__(self, pt):
-        return self.x == pt.x and self.y == pt.y
+        if not isinstance(pt, Point):
+            return False
+        else:
+            return self.x == pt.x and self.y == pt.y
 
     def __str__(self):
         string = "Point: <%s, %s>" % (self.x, self.y) 
@@ -47,7 +62,10 @@ class Ray:
         return Line(self.origin, end_point)
 
     def __eq__(self, other):
-        return self.origin == other.origin and self.radian == other.radian
+        if not isinstance(other, Ray):
+            return False
+        else:
+            return self.origin == other.origin and self.radian == other.radian
 
     def __str__(self):
         string = "Ray: <%s, %s> (%s) -->" % (self.origin.x, self.origin.y, self.radian)
@@ -120,10 +138,10 @@ class LineSeg:
                 return math.pi / 2
             elif delta_y < 0:
                 return math.pi * 3 / 4
-            else
-                raise ArithmeticError, "wrong LineSeg: %s" %self
+            else:
+                raise ArithmeticError, "invalid LineSeg: %s" %self
         
-        rad = math.atan(math.fabs(self.v) / math.fabs(self.u))
+        rad = math.atan(math.fabs(delta_y) / math.fabs(delta_x))
         if delta_x > 0 and delta_y > 0:  # first quadrant
             return rad
         elif delta_x < 0 and delta_y > 0:  # second quadrant
