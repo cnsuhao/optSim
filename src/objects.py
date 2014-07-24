@@ -7,9 +7,9 @@ import math
 import geometry
 
 class Light(geometry.Ray):
-    def __init__(self, intensity = 1.0, org = geometry.Point(0, 0), dirt = 0.0):
+    def __init__(self, intensity = 1.0, org = geometry.Point(0, 0), rad = 0.0):
         self.intensity = intensity
-        geometry.Ray.__init__(org, dirt)
+        geometry.Ray.__init__(org, rad)
 
     def incidencePoint(self, interface):
         line1 = self.toLine()
@@ -23,8 +23,8 @@ class Light(geometry.Ray):
     def postLightSource(self, interface, inpoint):
         norm_slope = -1.0 / interface.slope() 
         norm_vector = geometry.Vector.fromRadius(math.atan(norm_slope))
-        light_vector = self.direct
-        if light_vector.angle(norm_vector) > 3.14 / 2:
+        light_vector = self.radian
+        if light_vector.angleTo(norm_vector) > 3.14 / 2:
             norm_vector = geometry.Vector.fromRadius(math.atan(norm_slope) + 3.14)
 
         

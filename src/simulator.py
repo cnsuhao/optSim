@@ -41,7 +41,7 @@ class Simulator:
         distances_inter = dict()
         distances = list()
         for point in point_inter:
-            dis = point.distance(light.origin)
+            dis = point.distanceTo(light.origin)
             distances.append(dis)
             distances_inter[dis] = point_inter[point]
 
