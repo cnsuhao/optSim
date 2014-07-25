@@ -4,10 +4,7 @@ Created on Jul 24, 2014
 @author: andy
 '''
 
-from geometry import *
-from objects import *
-from simulator import *
-
+from optsim import *
 
 if __name__ == '__main__':
     origin = Point(0, 0)

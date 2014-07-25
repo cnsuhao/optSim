@@ -9,6 +9,10 @@ import math
 
 ###################### Geometry
 
+def equal(v1, v2):
+    epsilon = 0.000001
+    return math.fabs(v1 - v2) <= epsilon
+
 def regulateRadian(rad):
     r = rad
     while not (r >= 0 and r < math.pi * 2):
@@ -16,7 +20,6 @@ def regulateRadian(rad):
             r += math.pi * 2
         else:
             r -= math.pi * 2
-            
     return r
 
 class Point:
@@ -34,7 +37,7 @@ class Point:
         if not isinstance(pt, Point):
             return False
         else:
-            return self.x == pt.x and self.y == pt.y
+            return equal(self.distanceTo(pt), 0.0)
         
     def __ne__(self, pt):
         return not self.__eq__(pt)
@@ -60,7 +63,7 @@ class Ray:
         if not isinstance(other, Ray):
             return False
         else:
-            return self.origin == other.origin and self.radian == other.radian
+            return self.origin == other.origin and equal(self.radian, other.radian)
         
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -87,7 +90,7 @@ class Line:
         c = line.point1
         d = line.point2
 
-        if self.slope() == line.slope():
+        if equal(self.slope(), line.slope()):
             print "The two lines are parrelled!"
             return None
         else:
@@ -97,13 +100,13 @@ class Line:
             return ipt
 
     def slope(self):
-        if self.point2.x == self.point1.x:
+        if equal(self.point2.x, self.point1.x):
             return float('inf')
         else:
             return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
 
     def parallelWith(self, line):
-        return self.slope() == line.slope()
+        return equal(self.slope(), line.slope())
 
     def __str__(self):
         string = "-- %s -- %s --" % (self.point1, self.point2)
@@ -150,7 +153,7 @@ class LineSeg:
         ac = self.length()
         ab = self.start.distanceTo(pt)
         bc = pt.distanceTo(self.end)
-        if ac == ab + bc:
+        if equal(ac, (ab + bc)):
             return True
         else:
             return False
@@ -177,8 +180,13 @@ class Light(Ray):
         line1 = self.toLine()
         line2 = interface.toLine()
         ipt = line1.intersectPoint(line2)
-        if (ipt != None) and (ipt != self.origin) and (interface.hasPoint(ipt)):
-            return ipt
+        if (ipt != None) and (ipt != self.origin):  # 交点需存在且不是光线起点
+            linesg = LineSeg(self.origin, ipt)
+            # 在光线方向上， 在界面上 
+            if equal(linesg.radian(), self.radian) and interface.hasPoint(ipt):
+                return ipt
+            else:
+                return None
         else:
             return None
         
@@ -193,8 +201,8 @@ class Light(Ray):
 class Interface(LineSeg):
     def __init__(self, pt1=Point(0, 0), pt2=Point(1, 1), left_refidx=1.0, right_refidx=1.0):
         LineSeg.__init__(self, pt1, pt2)
-        self.left_refidx = left_refidx
-        self.right_refidx = right_refidx
+        self.left_refidx = left_refidx * 1.0
+        self.right_refidx = right_refidx * 1.0
         
     def __str__(self):
         string = "Interface: (%s) %s -- %s (%s)" % (self.left_refidx, self.start, self.end, self.right_refidx)
@@ -293,46 +301,46 @@ class Simulator:
             return None
         
         # 计算入射方向法线（射线）
+        r2l = 0     # 入射方向，从右向左？
         inter_rad = inc_interface.radian()
         candi_norm_rad = inter_rad + math.pi / 2  # 逆时针(左)旋转90度
         candi_norm_rad = regulateRadian(candi_norm_rad)  # 转换到[0,360)
         if math.fabs(candi_norm_rad - light.radian) < math.pi / 2:
             norm_rad = candi_norm_rad
+            r2l = 1     # 从右向左
         else:
             norm_rad = regulateRadian(candi_norm_rad + math.pi)
+            r2l = 0     # 从左向右
         
         # 计算入射角
         inc_angle = math.fabs(norm_rad - light.radian)
-        
-        # 获得入射方向，从左往右，或从右往左
-        r2l = 0
-        if norm_rad == candi_norm_rad:  # 从右往左入射
-            r2l = 1
-        else:
-            r2l = 0
             
-        # 根据界面折射率参数，计算折射角
-        ref_angle = 0.0
+        # 根据界面折射率参数，计算折射或反射光线角度
+        in_refix = 0.0
+        out_refix = 0.0
         if r2l == 1:
-            ref_angle = math.asin(math.sin(inc_angle) * inc_interface.right_refidx / inc_interface.left_refidx)
-        else:
-            ref_angle = math.asin(math.sin(inc_angle) * inc_interface.left_refidx / inc_interface.right_refidx)
+            in_refix = inc_interface.right_refidx
+            out_refix = inc_interface.left_refidx
+        else:  # 从左往右入射
+            in_refix = inc_interface.left_refidx
+            out_refix = inc_interface.right_refidx
             
-        # 计算临时光源的实际方向
-        real_radian = 0.0
-        # 检查是否全反射
-        if ref_angle >= math.pi / 2:  # 全反射
-            inter_angle = interface.radian()
-            real_radian = light.radian + 2 * (inter_angle - light.radian)
-        else:  # 折射
+        # 检查是否达到临界角
+        result_radian = 0.0
+        critical_angle = math.asin(out_refix / in_refix)
+        if inc_angle >= critical_angle:  # 全反射， 计算反射角
+            inter_angle = inc_interface.radian()
+            result_radian = light.radian + 2 * (inter_angle - light.radian)
+        else:  # 折射，计算折射角
+            ref_angle = math.asin(math.sin(inc_angle) * in_refix / out_refix)
             if light.radian > norm_rad:
-                real_radian = norm_rad + ref_angle
+                result_radian = norm_rad + ref_angle
             else:
-                real_radian = norm_rad - ref_angle
-        
-        real_radian = regulateRadian(real_radian)
+                result_radian = norm_rad - ref_angle
+
+        result_radian = regulateRadian(result_radian)
         # 创建临时光源
-        nlight = Light(inc_point, real_radian)
+        nlight = Light(inc_point, result_radian)
         tls = LightSource()
         tls.addLight(nlight)
         tls.temp = True
