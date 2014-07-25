@@ -22,9 +22,6 @@ def regulateRadian(rad):
     return r
 
 class Point:
-    x = 0.0
-    y = 0.0
-    
     def __init__(self, xpos=0.0, ypos=0.0):
         self.x = xpos * 1.0  # to float
         self.y = ypos * 1.0
@@ -40,7 +37,10 @@ class Point:
             return False
         else:
             return self.x == pt.x and self.y == pt.y
-
+        
+    def __ne__(self, pt):
+        return not self.__eq__(pt)
+        
     def __str__(self):
         string = "Point: <%s, %s>" % (self.x, self.y) 
         return string
@@ -50,12 +50,9 @@ class Point:
         return string
 
 class Ray:
-    origin = Point()
-    radian = 0.0
-    
     def __init__(self, org=Point(0, 0), rad=0.0):
         self.origin = org
-        self.radian = rad
+        self.radian = regulateRadian(rad)  # 转换到[0, 360)
 
     def toLine(self):
         end_point = Point(self.origin.x + math.cos(self.radian), self.origin.y + math.sin(self.radian))
@@ -66,6 +63,9 @@ class Ray:
             return False
         else:
             return self.origin == other.origin and self.radian == other.radian
+        
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __str__(self):
         string = "Ray: <%s, %s> (%s) -->" % (self.origin.x, self.origin.y, self.radian)
@@ -76,9 +76,6 @@ class Ray:
         return string
 
 class Line:
-    point1 = Point()
-    point2 = Point()
-    
     def __init__(self, pt1=Point(0, 0), pt2=Point(1, 1)):
         if pt1 == pt2:
             raise ArithmeticError, "invalid Line: %s" % self
@@ -102,10 +99,13 @@ class Line:
             return ipt
 
     def slope(self):
-        return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
+        if self.point2.x == self.point1.x:
+            return float('inf')
+        else:
+            return (self.point2.y - self.point1.y) / (self.point2.x - self.point1.x)
 
     def parallelWith(self, line):
-        return self.slope() == line.slope
+        return self.slope() == line.slope()
 
     def __str__(self):
         string = "Line: -- <%s, %s> -- <%s, %s> --" % (self.point1.x, self.point1.y, self.point2.x, self.point2.y)
@@ -117,9 +117,6 @@ class Line:
 
 
 class LineSeg:
-    start = Point()
-    end = Point()
-    
     def __init__(self, pt1=Point(0, 0), pt2=Point(1, 1)):
         if pt1 == pt2:
             raise ArithmeticError, "invalid LineSeg: %s" % self
@@ -139,9 +136,9 @@ class LineSeg:
             elif delta_y < 0:
                 return math.pi * 3 / 4
             else:
-                raise ArithmeticError, "invalid LineSeg: %s" %self
+                raise ArithmeticError, "invalid LineSeg: %s" % self
         
-        rad = math.atan(math.fabs(delta_y) / math.fabs(delta_x))
+        rad = math.atan(math.fabs(delta_y / delta_x))
         if delta_x > 0 and delta_y > 0:  # first quadrant
             return rad
         elif delta_x < 0 and delta_y > 0:  # second quadrant

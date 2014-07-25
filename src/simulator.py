@@ -10,11 +10,12 @@ import geometry
 import objects
 
 class Simulator:
-    __a_light_sources = []
-    __b_light_sources = []
-    cur_light_sources = __a_light_sources
-    next_light_sources = __b_light_sources
-    interfaces = []
+    def __init__(self):
+        self.__a_light_sources = []
+        self.__b_light_sources = []
+        self.cur_light_sources = self.__a_light_sources
+        self.next_light_sources = self.__b_light_sources
+        self.interfaces = []
     
     def addLightSource(self, ls):
         self.cur_light_sources.append(ls)
@@ -37,16 +38,19 @@ class Simulator:
             if ls.temp != True:
                 self.next_light_sources.append(ls)
         
-        # 交换当前和下次的光源列表
-        tmp_lss = self.next_light_sources
-        self.next_light_sources = self.cur_light_sources
-        self.cur_light_sources = tmp_lss
+        # 轮转当前光源列表
+        tmp_lss = self.cur_light_sources
+        self.cur_light_sources = self.next_light_sources
+        self.next_light_sources = tmp_lss
+        # 清空下次光源列表
+        while len(self.next_light_sources) > 0:
+            self.next_light_sources.pop()
             
 
     def __handleALight(self, light):
         ''' 返回临时光源 '''
         # 计算光线与所有界面的入射点
-        min_dis = 99999999999
+        min_dis = float('inf')
         inc_point = None
         inc_interface = None
         # 取所有点中距离光线起点最近的点作为实际入射点
@@ -65,8 +69,8 @@ class Simulator:
         
         # 计算入射方向法线（射线）
         inter_rad = inc_interface.radian()
-        candi_norm_rad = inter_rad + math.pi / 2  # 顺时针(左)旋转90度
-        candi_norm_rad = geometry.regulateRadian(candi_norm_rad)
+        candi_norm_rad = inter_rad + math.pi / 2  # 逆时针(左)旋转90度
+        candi_norm_rad = geometry.regulateRadian(candi_norm_rad)    # 转换到[0,360)
         if math.fabs(candi_norm_rad - light.radian) < math.pi / 2:
             norm_rad = candi_norm_rad
         else:
