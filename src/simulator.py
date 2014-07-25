@@ -16,6 +16,7 @@ class Simulator:
         self.cur_light_sources = self.__a_light_sources
         self.next_light_sources = self.__b_light_sources
         self.interfaces = []
+        self.step_count = 0
     
     def addLightSource(self, ls):
         self.cur_light_sources.append(ls)
@@ -45,6 +46,8 @@ class Simulator:
         # 清空下次光源列表
         while len(self.next_light_sources) > 0:
             self.next_light_sources.pop()
+        
+        self.step_count += 1
             
 
     def __handleALight(self, light):
@@ -112,3 +115,23 @@ class Simulator:
         tls.addLight(nlight)
         tls.temp = True
         return tls
+    
+    def __str__(self):
+        string = "------------------ Step: %s ------------------ \n" %self.step_count
+        for ls in self.cur_light_sources:
+            string += "%s\n" %ls
+        
+        for inter in self.interfaces:
+            string += "%s\n" %inter
+        
+        return string
+
+    def __repr__(self):
+        string = "------------------ Step: %s ------------------ \n" %self.step_count
+        for ls in self.cur_light_sources:
+            string += "%s\n" %ls
+        
+        for inter in self.interfaces:
+            string += "%s\n" %inter
+        
+        return string

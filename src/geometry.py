@@ -42,11 +42,11 @@ class Point:
         return not self.__eq__(pt)
         
     def __str__(self):
-        string = "Point: <%s, %s>" % (self.x, self.y) 
+        string = "<%s, %s>" % (self.x, self.y) 
         return string
 
     def __repr__(self):
-        string = "Point: <%s, %s>" % (self.x, self.y) 
+        string = "<%s, %s>" % (self.x, self.y) 
         return string
 
 class Ray:
@@ -68,11 +68,11 @@ class Ray:
         return not self.__eq__(other)
 
     def __str__(self):
-        string = "Ray: <%s, %s> (%s) -->" % (self.origin.x, self.origin.y, self.radian)
+        string = "%s --> (%s)" % (self.origin, self.radian)
         return string
     
     def __repr__(self):
-        string = "Ray: <%s, %s> (%s) -->" % (self.origin.x, self.origin.y, self.radian)
+        string = "%s --> (%s)" % (self.origin, self.radian)
         return string
 
 class Line:
@@ -108,11 +108,11 @@ class Line:
         return self.slope() == line.slope()
 
     def __str__(self):
-        string = "Line: -- <%s, %s> -- <%s, %s> --" % (self.point1.x, self.point1.y, self.point2.x, self.point2.y)
+        string = "-- %s -- %s --" % (self.point1, self.point2)
         return string
 
     def __repr__(self):
-        string = "Line: -- <%s, %s> -- <%s, %s> --" % (self.point1.x, self.point1.y, self.point2.x, self.point2.y)
+        string = "-- %s -- %s --" % (self.point1, self.point2)
         return string
 
 
@@ -161,10 +161,10 @@ class LineSeg:
         return Line(self.start, self.end)
 
     def __str__(self):
-        string = "Line Segment: <%s, %s> -- <%s, %s>" % (self.start.x, self.start.y, self.end.x, self.end.y)
+        string = "%s -- %s" % (self.start, self.end)
         return string
 
     def __repr__(self):
-        string = "Line Segment: <%s, %s> -- <%s, %s>" % (self.start.x, self.start.y, self.end.x, self.end.y)
+        string = "%s -- %s" % (self.start, self.end)
         return string
 
