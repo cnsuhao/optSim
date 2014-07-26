@@ -5,15 +5,28 @@ Created on Jul 24, 2014
 '''
 
 from optsim import *
+import optdraw
+import time
+import math
 
 if __name__ == '__main__':
-    origin = Point(0, 0)
-    hori_light1 = Light(origin, 0)
-    ls = LightSource()
-    ls.addLight(hori_light1)
-    interface1 = Interface(Point(1,0), Point(0,1))
+    pt = Point(0, 0)
+    
+    interface1 = Interface(Point(50,-400), Point(50,400))
+    interface1.left_refidx = 1.5
+    
     sim = Simulator()
-    sim.addLightSource(ls)
-    sim.addInterfaces(interface1)
+    sim.addInterface(interface1)
+    
+    for angle in range(-85, 85, 1):
+        lt = Light(pt, math.radians(angle))
+        sim.addLight(lt)
+        
+    odraw = optdraw.OptDraw(600, 900)
+    
     while True:
         sim.step()
+        ret = odraw.draw(sim)
+        if ret == 'quit':
+            break
+        time.sleep(0.5)

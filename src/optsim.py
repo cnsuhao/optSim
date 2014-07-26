@@ -33,6 +33,9 @@ class Point:
     def distanceTo(self, pt):
         return math.sqrt((pt.x - self.x) ** 2 + (pt.y - self.y) ** 2)
 
+    def toTuple(self):
+        return (self.x, self.y)
+
     def __eq__(self, pt):
         if not isinstance(pt, Point):
             return False
@@ -91,7 +94,7 @@ class Line:
         d = line.point2
 
         if equal(self.slope(), line.slope()):
-            print "The two lines are parrelled!"
+            # The two lines are parrelled!
             return None
         else:
             ipt = Point()
@@ -140,9 +143,9 @@ class LineSeg:
                 raise ArithmeticError, "invalid LineSeg: %s" % self
         
         rad = math.atan(math.fabs(delta_y / delta_x))
-        if delta_x > 0 and delta_y > 0:  # first quadrant
+        if delta_x > 0 and delta_y >= 0:  # first quadrant
             return rad
-        elif delta_x < 0 and delta_y > 0:  # second quadrant
+        elif delta_x < 0 and delta_y >= 0:  # second quadrant
             return math.pi - rad
         elif delta_x < 0 and delta_y < 0:  # third quadrant
             return math.pi + rad
@@ -175,6 +178,8 @@ class Light(Ray):
     def __init__(self, org=Point(0, 0), rad=0.0, inten=1.0):
         Ray.__init__(self, org, rad)
         self.intensity = inten
+        self.transient = False
+        self.hitpoint = None
 
     def incidencePoint(self, interface):
         line1 = self.toLine()
@@ -191,11 +196,19 @@ class Light(Ray):
             return None
         
     def __str__(self):
-        string = "Light: %s [%s] --> (%s)" % (self.origin, self.intensity, self.radian)
+        if self.hitpoint != None:
+            string = "Light: [%s] %s --> %s (%s)" % (self.intensity, self.origin, self.hitpoint, self.radian)
+        else:
+            string = "Light: [%s] %s --> inf (%s)" % (self.intensity, self.origin, self.radian)
+            
         return string
 
     def __repr__(self):
-        string = "Light: %s [%s] --> (%s)" % (self.origin, self.intensity, self.radian)
+        if self.hitpoint != None:
+            string = "Light: [%s] %s --> %s (%s)" % (self.intensity, self.origin, self.hitpoint, self.radian)
+        else:
+            string = "Light: [%s] %s --> inf (%s)" % (self.intensity, self.origin, self.radian)
+            
         return string
 
 class Interface(LineSeg):
@@ -212,73 +225,58 @@ class Interface(LineSeg):
         string = "Interface: (%s) %s -- %s (%s)" % (self.left_refidx, self.start, self.end, self.right_refidx)
         return string
 
-class LightSource:
-    def __init__(self):
-        self.temp = False
-        self.__lights = []
-    
-    def addLight(self, light):
-        self.__lights.append(light)
-    
-    def generateLights(self):
-        return self.__lights
-    
-    def __str__(self):
-        string = "Light Source: "
-        for light in self.__lights:
-            string += "  %s" % light
-        
-        return string
-
-    def __repr__(self):
-        string = "Light Source: "
-        for light in self.__lights:
-            string += "   %s" % light
-        
-        return string
-    
 ####################### The simulator
     
 class Simulator:
     def __init__(self):
-        self.__a_light_sources = []
-        self.__b_light_sources = []
-        self.cur_light_sources = self.__a_light_sources
-        self.next_light_sources = self.__b_light_sources
+        self.__a_lights = []
+        self.__b_lights = []
+        self.cur_lights = self.__a_lights
+        self.next_lights = self.__b_lights
         self.interfaces = []
         self.step_count = 0
+        self.callbacks = {}
     
-    def addLightSource(self, ls):
-        self.cur_light_sources.append(ls)
+    def addLight(self, light):
+        self.next_lights.append(light)
 
-    def addInterfaces(self, inter):
+    def addInterface(self, inter):
         self.interfaces.append(inter)
+        
+    def getLights(self):
+        return self.cur_lights
+    
+    def getInterfaces(self):
+        return self.interfaces
+
+    def addCallback(self, tp, func):
+        '''设置各种类型的回调函数'''
+        self.callbacks[tp] = func
 
     def step(self):
-        # 遍历当前所有的光源
-        for ls in self.cur_light_sources:
-            # 对每个光源，产生光线
-            lights = ls.generateLights()
-            for light in lights:
-                # 处理每根光线，每根光线生成一个临时光源
-                tmpls = self.__handleALight(light)
-                if tmpls != None:
-                    self.next_light_sources.append(tmpls)  # 加入光源列表，供下次迭代使用
-            
-            # 检查此光源是否临时，若否，则加入光源列表，供下次迭代继续使用
-            if ls.temp != True:
-                self.next_light_sources.append(ls)
+        # 准备光线列表，轮转当前光线列表
+        tmp_lts = self.cur_lights
+        self.cur_lights = self.next_lights
+        self.next_lights = tmp_lts
+        # 清空下次光线列表
+        while len(self.next_lights) > 0:
+            self.next_lights.pop()
         
-        # 轮转当前光源列表
-        tmp_lss = self.cur_light_sources
-        self.cur_light_sources = self.next_light_sources
-        self.next_light_sources = tmp_lss
-        # 清空下次光源列表
-        while len(self.next_light_sources) > 0:
-            self.next_light_sources.pop()
+        # 遍历当前所有的光线
+        for light in self.cur_lights:
+            # 处理每根光线，每根光线生成一个瞬时光线
+            generated_light = self.__handleALight(light)
+            if generated_light != None:
+                light.hitpoint = generated_light.origin  # 设置撞击点
+                self.next_lights.append(generated_light)  # 加入光线列表，供下次迭代使用
+            
+                # 检查此光线是否瞬时，若否，则加入光源列表，供下次迭代继续使用
+                if light.transient != True:
+                    self.next_lights.append(light)
+            else:
+                light.hitpoint = None
         
         self.step_count += 1
-            
 
     def __handleALight(self, light):
         ''' 返回临时光源 '''
@@ -301,16 +299,17 @@ class Simulator:
             return None
         
         # 计算入射方向法线（射线）
-        r2l = 0     # 入射方向，从右向左？
+        r2l = 0  # 入射方向，从右向左？
         inter_rad = inc_interface.radian()
         candi_norm_rad = inter_rad + math.pi / 2  # 逆时针(左)旋转90度
         candi_norm_rad = regulateRadian(candi_norm_rad)  # 转换到[0,360)
-        if math.fabs(candi_norm_rad - light.radian) < math.pi / 2:
+        delta_rad = math.fabs(candi_norm_rad - light.radian)
+        if (delta_rad < math.pi / 2) or (delta_rad > math.pi * 3 / 2):  # candi_norm_rad 与 light 同指向
             norm_rad = candi_norm_rad
-            r2l = 1     # 从右向左
+            r2l = 1  # 从右向左
         else:
             norm_rad = regulateRadian(candi_norm_rad + math.pi)
-            r2l = 0     # 从左向右
+            r2l = 0  # 从左向右
         
         # 计算入射角
         inc_angle = math.fabs(norm_rad - light.radian)
@@ -325,31 +324,46 @@ class Simulator:
             in_refix = inc_interface.left_refidx
             out_refix = inc_interface.right_refidx
             
-        # 检查是否达到临界角
+        # 计算折射或反射角
         result_radian = 0.0
-        critical_angle = math.asin(out_refix / in_refix)
-        if inc_angle >= critical_angle:  # 全反射， 计算反射角
+        try:
+            ref_angle = math.asin(math.sin(inc_angle) * in_refix / out_refix)
+        except ValueError:
+            # 发生全反射，计算发射角
             inter_angle = inc_interface.radian()
             result_radian = light.radian + 2 * (inter_angle - light.radian)
-        else:  # 折射，计算折射角
-            ref_angle = math.asin(math.sin(inc_angle) * in_refix / out_refix)
+            # 检查回调函数
+            func = self.__findCallback('reflection')
+            if func != None:
+                func((inc_point, result_radian))  # (反射点，反射光线角度)
+        else:
+            # 发生折射，计算折射角
             if light.radian > norm_rad:
                 result_radian = norm_rad + ref_angle
             else:
                 result_radian = norm_rad - ref_angle
+                
+            func = self.__findCallback('refraction')
+            if func != None:
+                func((inc_point, result_radian))  # (折射点， 折射光线角度)
 
         result_radian = regulateRadian(result_radian)
-        # 创建临时光源
+        
+        # 创建瞬时光线
         nlight = Light(inc_point, result_radian)
-        tls = LightSource()
-        tls.addLight(nlight)
-        tls.temp = True
-        return tls
+        nlight.transient = True
+        return nlight
+    
+    def __findCallback(self, tp):
+        if self.callbacks.has_key(tp):
+            return self.callbacks[tp]
+        else:
+            return None
     
     def __str__(self):
         string = "------------------ Step: %s ------------------ \n" % self.step_count
-        for ls in self.cur_light_sources:
-            string += "%s\n" % ls
+        for light in self.cur_lights:
+            string += "%s\n" % light
         
         for inter in self.interfaces:
             string += "%s\n" % inter
@@ -358,8 +372,8 @@ class Simulator:
 
     def __repr__(self):
         string = "------------------ Step: %s ------------------ \n" % self.step_count
-        for ls in self.cur_light_sources:
-            string += "%s\n" % ls
+        for light in self.cur_lights:
+            string += "%s\n" % light
         
         for inter in self.interfaces:
             string += "%s\n" % inter
