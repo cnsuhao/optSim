@@ -11,7 +11,10 @@ import math
 
 def equal(v1, v2):
     epsilon = 0.000001
-    return math.fabs(v1 - v2) <= epsilon
+    if v1 == v2:  # inf == inf
+        return True
+    else:
+        return math.fabs(v1 - v2) <= epsilon
 
 def regulateRadian(rad):
     r = rad
@@ -138,7 +141,7 @@ class LineSeg:
             if delta_y > 0:
                 return math.pi / 2
             elif delta_y < 0:
-                return math.pi * 3 / 4
+                return math.pi * 3 / 2
             else:
                 raise ArithmeticError, "invalid LineSeg: %s" % self
         
