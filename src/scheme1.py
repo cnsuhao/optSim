@@ -15,24 +15,21 @@ import time, sys
 # 结构参数
 L0 = 800  # 水平界面的长度
 L1 = 100  # 下板定长界面的长度
-Division = 50  # 分成一百分，放置光源
-H1 = 10  # 　上挡板高度
-H1_range = range(1, 10, 2)
-H2 = 10  # 下挡板高度
-H2_range = range(1, 10, 2)
+Division = 100  # 分成一百分，放置光源
 gap = 1  # 上下板中间间隙
-pmmaidx = 1  # PMMA 折射率
+pmmaidx = 1.5  # PMMA 折射率
 
 # 界面参数，角度
 # 上板
+H1_range = range(1, 10, 2)
 eta_range = range(20, 70, 5)
 lamb1_range = range(20, 70, 5)
 # 下板
+H2_range = range(1, 10, 2)
 alpha_range = range(20, 70, 5)
 # lamb2 # 没有用到
 
-light_angle_start = -30     # 光线相对于法线的起始角度（包括）
-light_angle_end = 30    # 光线的终止角度（包括）
+light_angle = 30  # 光线与法线夹角范围（包括）
 
 statistics_div = 100
 
@@ -43,32 +40,30 @@ __next_config = False
 __paused = False
 __detected_out_lights = set()
 __distance_set = set()
-__up_gap_interface = None
-__down_gap_interface = None
 __down_interface = None
+__statistics_length = 0.0
+__total_points = (2 * light_angle + 1) * (Division - 1)
 
 def refracSpot(light):
-    global __next_config, __distance_set, __detected_out_lights, __down_interface
+    global __next_config, __distance_set, __detected_out_lights, __down_interface, __statistics_length, __total_points
     
     if not (light.origin.y == 0 or light.origin.y == gap):  # 排除间隙之间的折射
         if not __next_config:
-            total_points = (light_angle_end - light_angle_start + 1) * (Division - 1)
             __detected_out_lights.add(light)
-            print "%s/%s\r" % (len(__detected_out_lights), total_points)
+#             print "%s/%s\r" % (len(__detected_out_lights), total_points)
             
             if __down_interface.hasPoint(light.origin):  # 出射点在下底板上
-                dis = light.origin.distanceTo(p3)
+                dis = light.origin.distanceTo(__down_interface.start)
                 __distance_set.add(dis)
         
-            if len(__detected_out_lights) == total_points:  # 检测到所有光线都已出射，开始统计分析
+            if len(__detected_out_lights) == __total_points:  # 检测到所有光线都已出射，开始统计分析
 #                     print "Stage completed, do the analysis..."
                 # 统计出射点数
                 statistics_result = {}
-                statistics_length = __down_interface.length() / statistics_div
                 for part in range(0, statistics_div):
                     count = 0
-                    dis_start = part * statistics_length
-                    dis_end = (part + 1) * statistics_length
+                    dis_start = part * __statistics_length
+                    dis_end = dis_start + __statistics_length
                     for dis in __distance_set:
                         if dis >= dis_start and dis < dis_end:
                             count += 1
@@ -97,8 +92,8 @@ def calStatistics(vals):
     return (sum1, mean, var)
 
 def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
-    global p1, p2, p3, p4, p5, p6, __statistics_length, __down_interface, __up_gap_interface, __down_gap_interface
-    print "Current Simulating [alpha: %s, H2: %s, eta: %s, H1: %s, lamb1: %s]" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1)
+    global __statistics_length, __down_interface
+    print "Config [alpha: %s, H2: %s, eta: %s, H1: %s, lamb1: %s]" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1)
     # 计算六个点的坐标
     p1 = Point(-L0 / 2.0, 0)
     p2 = Point(L0 / 2.0, 0)
@@ -131,18 +126,18 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     inter9 = Interface(p4, p1)
     inter10 = Interface(p5, p2)
     
-    __up_gap_interface = inter4  # 上间隙板
-    __down_gap_interface = inter1  # 下间隙板
     __down_interface = inter3  # 三号板是下底板
+    __statistics_length = __down_interface.length() / statistics_div
     
     sim = Simulator()
     
-    light_angles_range = range(90 - cur_alpha + light_angle_start, 90 - cur_alpha + light_angle_end + 1, 1)  # 所有光线角度
+    light_angles_range = range(90 - cur_alpha - light_angle, 90 - cur_alpha + light_angle + 1, 1)  # 所有光线角度
     for part in range(1, Division):
         pos_x = (p3.x - p1.x) / Division * part + p1.x 
         pos_y = (p3.y - p1.y) / Division * part + p1.y
         for angle in light_angles_range:
             lt = Light(Point(pos_x, pos_y), radians(angle))
+            lt.transient = True  # 设置瞬时光源加快计算速度
             sim.addLight(lt)
     
     sim.addInterface(inter1)
@@ -158,8 +153,7 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     
     sim.addCallback('refraction', refracSpot)
     
-    odraw = optdraw.OptDraw(L0 + 100, 400)
-    
+    odraw = optdraw.OptDraw(L0 + 100, 600)
     global __next_config, __paused
     while not __next_config:
         if not __paused:
@@ -170,7 +164,6 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
         elif ret == 'space':
             __paused = not __paused
 #         print sim
-#         time.sleep(0.1)
         
 if __name__ == '__main__':
     # 全部配置

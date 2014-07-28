@@ -30,6 +30,7 @@ class OptDraw(object):
         pass
     
     def draw(self, simulator):
+        self.screen.fill((0, 0, 0))
         lights = simulator.getLights()
         for light in lights:
             self.__drawLight(light)

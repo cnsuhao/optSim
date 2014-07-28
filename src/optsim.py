@@ -11,7 +11,7 @@ import math
 
 def equal(v1, v2):
     epsilon = 0.000001
-    if v1 == v2:  # inf == inf
+    if v1 == v2:  # inf )== inf
         return True
     else:
         return math.fabs(v1 - v2) <= epsilon
@@ -143,7 +143,7 @@ class LineSeg:
     def radian(self):
         delta_x = self.end.x - self.start.x
         delta_y = self.end.y - self.start.y
-        if delta_x == 0:
+        if equal(delta_x, 0):
             if delta_y > 0:
                 return math.pi / 2
             elif delta_y < 0:
@@ -152,9 +152,9 @@ class LineSeg:
                 raise ArithmeticError, "invalid LineSeg: %s" % self
         
         rad = math.atan(math.fabs(delta_y / delta_x))
-        if delta_x > 0 and delta_y >= 0:  # first quadrant
+        if delta_x > 0 and (delta_y > 0 or equal(delta_y, 0)):  # first quadrant
             return rad
-        elif delta_x < 0 and delta_y >= 0:  # second quadrant
+        elif delta_x < 0 and (delta_y > 0 or equal(delta_y, 0)):  # second quadrant
             return math.pi - rad
         elif delta_x < 0 and delta_y < 0:  # third quadrant
             return math.pi + rad
@@ -238,10 +238,8 @@ class Interface(LineSeg):
     
 class Simulator:
     def __init__(self):
-        self.__a_lights = []
-        self.__b_lights = []
-        self.cur_lights = self.__a_lights
-        self.next_lights = self.__b_lights
+        self.cur_lights = []
+        self.next_lights = []
         self.interfaces = []
         self.step_count = 0
         self.callbacks = {}
@@ -263,24 +261,20 @@ class Simulator:
         self.callbacks[tp] = func
 
     def step(self):
-        # 准备光线列表，轮转当前光线列表
-        tmp_lts = self.cur_lights
+        # 准备光线列表
         self.cur_lights = self.next_lights
-        self.next_lights = tmp_lts
-        # 清空下次光线列表
-        while len(self.next_lights) > 0:
-            self.next_lights.pop()
+        self.next_lights = []
         
         # 遍历当前所有的光线
         for light in self.cur_lights:
             # 处理每根光线，每根光线生成一个瞬时光线
             generated_light = self.__handleALight(light)
-            if generated_light != None:
+            if generated_light is not None:
                 light.hitpoint = generated_light.origin  # 设置撞击点
                 self.next_lights.append(generated_light)  # 加入光线列表，供下次迭代使用
             
                 # 检查此光线是否瞬时，若否，则加入光源列表，供下次迭代继续使用
-                if light.transient != True:
+                if light.transient is not True:
                     self.next_lights.append(light)
             else:
                 light.hitpoint = None
@@ -296,7 +290,7 @@ class Simulator:
         # 取所有点中距离光线起点最近的点作为实际入射点
         for interface in self.interfaces:
             ipt = light.incidencePoint(interface)
-            if ipt != None:  # 有交叉点
+            if ipt is not None:  # 有交叉点
                 # 计算到光线起点的距离
                 dis = ipt.distanceTo(light.origin)
                 if dis < min_dis:
