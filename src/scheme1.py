@@ -15,96 +15,101 @@ import time, sys
 # 结构参数
 L0 = 800  # 水平界面的长度
 L1 = 100  # 下板定长界面的长度
-Division = 100  # 分成一百分，放置光源
+Division = 50  # 分成一百分，放置光源
 H1 = 10  # 　上挡板高度
+H1_range = range(1, 10, 2)
 H2 = 10  # 下挡板高度
+H2_range = range(1, 10, 2)
 gap = 1  # 上下板中间间隙
-pmmaidx = 1.5  # PMMA 折射率
+pmmaidx = 1  # PMMA 折射率
 
 # 界面参数，角度
 # 上板
-eta = 50  # (0, 90)
-lamb1 = 10  # (0, 90)
+eta_range = range(20, 70, 5)
+lamb1_range = range(20, 70, 5)
 # 下板
-alpha = 45  # (0, 90)
-# lamb2 = 20  # (0, 90)    # 没有用到
+alpha_range = range(20, 70, 5)
+# lamb2 # 没有用到
 
-light_angles_range = range(90 - alpha - 30, 90 - alpha + 30, 1)  # 所有光线角度
-single_light_mode = False  # 是不是单光线模式，True 为单光线模式，光线依次出现，可以计算光线角度和出射位置的关系；False 为多光线模式，可以查看出光分布
+light_angle_start = -30     # 光线相对于法线的起始角度（包括）
+light_angle_end = 30    # 光线的终止角度（包括）
+
 statistics_div = 100
 
 ####################################
 
 # 　这些参数不要动
-__quit_flag = False
+__next_config = False
 __paused = False
-__used_light_angles = []
+__detected_out_lights = set()
 __distance_set = set()
-__down_inter_length = 0.0 
-__statistics_length = 0.0
+__up_gap_interface = None
+__down_gap_interface = None
+__down_interface = None
 
-def refracSpot((pt, rad)):
-    global __quit_flag, __distance_set
+def refracSpot(light):
+    global __next_config, __distance_set, __detected_out_lights, __down_interface
     
-    if pt.y < 0:  # 仅考虑从下表面出射的情况
-        dis = pt.distanceTo(p3)
-        
-        if single_light_mode:
-            print "Light angle: %s, distance: %s" % (__used_light_angles[0], dis)
-            __quit_flag = True
-        else:
-            total_points = len(light_angles_range) * (Division - 1)
-            __distance_set.add(dis)
-            print "%s/%s" % (len(__distance_set), total_points)
+    if not (light.origin.y == 0 or light.origin.y == gap):  # 排除间隙之间的折射
+        if not __next_config:
+            total_points = (light_angle_end - light_angle_start + 1) * (Division - 1)
+            __detected_out_lights.add(light)
+            print "%s/%s\r" % (len(__detected_out_lights), total_points)
             
-            if len(__distance_set) == total_points:
-                print "Stage completed, do the analysis..."
+            if __down_interface.hasPoint(light.origin):  # 出射点在下底板上
+                dis = light.origin.distanceTo(p3)
+                __distance_set.add(dis)
+        
+            if len(__detected_out_lights) == total_points:  # 检测到所有光线都已出射，开始统计分析
+#                     print "Stage completed, do the analysis..."
                 # 统计出射点数
                 statistics_result = {}
+                statistics_length = __down_interface.length() / statistics_div
                 for part in range(0, statistics_div):
                     count = 0
-                    dis_start = part * __statistics_length
-                    dis_end = (part + 1) * __statistics_length
+                    dis_start = part * statistics_length
+                    dis_end = (part + 1) * statistics_length
                     for dis in __distance_set:
                         if dis >= dis_start and dis < dis_end:
                             count += 1
                     statistics_result[part] = count
-                # 求方差
-                variance = calVariance(statistics_result.values())
-                print statistics_result.values
-                print "*** Variance is %s" % variance
+                # 求统计属性
+                (total, mean, variance) = calStatistics(statistics_result.values())
+                print "Hist: %s" % statistics_result.values()
+                print "Total: %s, Mean: %s, Variance: %s" % (total, mean, variance)
                 
-                print "Done, Next stage..."
-                # FIXME clear set!
-                __quit_flag = True
+                # cleanup
+                __detected_out_lights.clear()
+                __distance_set.clear()
             
+#                     print "Done, Next Config..."
+                print "-------------------------------------------------------------------------"
+                __next_config = True
 
-def calVariance(vals):
+def calStatistics(vals):
     sum1 = 0.0
     sum2 = 0.0
     for v in vals:
         sum1 += v
-        sum2 += v ** 2 
-    
+        sum2 += v ** 2    
     mean = sum1 / len(vals)
     var = sum2 / len(vals) - mean ** 2
-    return var
+    return (sum1, mean, var)
 
-def simulating():
-    global p1, p2, p3, p4, p5, p6, __down_inter_length, __statistics_length
+def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
+    global p1, p2, p3, p4, p5, p6, __statistics_length, __down_interface, __up_gap_interface, __down_gap_interface
+    print "Current Simulating [alpha: %s, H2: %s, eta: %s, H1: %s, lamb1: %s]" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1)
     # 计算六个点的坐标
     p1 = Point(-L0 / 2.0, 0)
     p2 = Point(L0 / 2.0, 0)
-    p3 = Point(cos(radians(alpha)) * L1 - L0 / 2.0, -sin(radians(alpha)) * L1)
+    p3 = Point(cos(radians(cur_alpha)) * L1 - L0 / 2.0, -sin(radians(cur_alpha)) * L1)
     p4 = Point(p1.x, p1.y + gap)
     p5 = Point(p2.x, p2.y + gap)
-    a = tan(radians(lamb1)) * (L0 + H1 / tan(radians(lamb1))) / (tan(radians(eta)) + tan(radians(lamb1)))
-    p6 = Point(a * cos(radians(eta)) - L0 / 2.0, a * sin(radians(eta)) + gap)
+    a = tan(radians(cur_lamb1)) * (L0 + cur_H1 / tan(radians(cur_lamb1))) / (tan(radians(cur_eta)) + tan(radians(cur_lamb1)))
+    p6 = Point(a * cos(radians(cur_eta)) - L0 / 2.0, a * sin(radians(cur_eta)) + gap)
     # 新加的右侧挡板上两点
-    p7 = Point(p2.x, p2.y - H2)
-    p8 = Point(p5.x, p5.y + H1)
-    __down_inter_length = p7.distanceTo(p3)  # 保存下界面的长度
-    __statistics_length = __down_inter_length / statistics_div
+    p7 = Point(p2.x, p2.y - cur_H2)
+    p8 = Point(p5.x, p5.y + cur_H1)
     
     inter1 = Interface(p1, p2)
     inter1.right_refidx = pmmaidx
@@ -122,13 +127,21 @@ def simulating():
     inter6.right_refidx = 9999  # 模拟镜面
     inter8 = Interface(p8, p5)
     inter8.right_refidx = 9999
+    # 间隙两端挡板
+    inter9 = Interface(p4, p1)
+    inter10 = Interface(p5, p2)
+    
+    __up_gap_interface = inter4  # 上间隙板
+    __down_gap_interface = inter1  # 下间隙板
+    __down_interface = inter3  # 三号板是下底板
     
     sim = Simulator()
     
+    light_angles_range = range(90 - cur_alpha + light_angle_start, 90 - cur_alpha + light_angle_end + 1, 1)  # 所有光线角度
     for part in range(1, Division):
         pos_x = (p3.x - p1.x) / Division * part + p1.x 
         pos_y = (p3.y - p1.y) / Division * part + p1.y
-        for angle in __used_light_angles:
+        for angle in light_angles_range:
             lt = Light(Point(pos_x, pos_y), radians(angle))
             sim.addLight(lt)
     
@@ -140,13 +153,15 @@ def simulating():
     sim.addInterface(inter6)
     sim.addInterface(inter7)
     sim.addInterface(inter8)
+    sim.addInterface(inter9)
+    sim.addInterface(inter10)
     
     sim.addCallback('refraction', refracSpot)
     
     odraw = optdraw.OptDraw(L0 + 100, 400)
     
-    global __quit_flag, __paused
-    while not __quit_flag:
+    global __next_config, __paused
+    while not __next_config:
         if not __paused:
             sim.step()
         ret = odraw.draw(sim)
@@ -158,11 +173,11 @@ def simulating():
 #         time.sleep(0.1)
         
 if __name__ == '__main__':
-    if single_light_mode:
-        for angle in light_angles_range:
-            __quit_flag = False  # reset __quit_flag
-            __used_light_angles = [angle]
-            simulating()
-    else:
-        __used_light_angles = light_angles_range
-        simulating()
+    # 全部配置
+    for alph in alpha_range:
+        for h2 in H2_range:
+            for et in eta_range:
+                for h1 in H1_range:
+                    for lam1 in lamb1_range:
+                        __next_config = False
+                        simulating(alph, h2, et, h1, lam1)

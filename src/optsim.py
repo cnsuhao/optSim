@@ -45,6 +45,9 @@ class Point:
         else:
             return equal(self.distanceTo(pt), 0.0)
         
+    def __hash__(self):
+        return hash(self.x + self.y)
+        
     def __ne__(self, pt):
         return not self.__eq__(pt)
         
@@ -70,6 +73,9 @@ class Ray:
             return False
         else:
             return self.origin == other.origin and equal(self.radian, other.radian)
+        
+    def __hash__(self):
+        return hash(self.origin.x + self.origin.y + self.radian)
         
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -329,32 +335,33 @@ class Simulator:
             
         # 计算折射或反射角
         result_radian = 0.0
+        ref_type = ''
         try:
             ref_angle = math.asin(math.sin(inc_angle) * in_refix / out_refix)
         except ValueError:
             # 发生全反射，计算发射角
+            ref_type = 'reflection'
             inter_angle = inc_interface.radian()
             result_radian = light.radian + 2 * (inter_angle - light.radian)
-            # 检查回调函数
-            func = self.__findCallback('reflection')
-            if func != None:
-                func((inc_point, result_radian))  # (反射点，反射光线角度)
         else:
             # 发生折射，计算折射角
+            ref_type = 'refraction'
             if light.radian > norm_rad:
                 result_radian = norm_rad + ref_angle
             else:
                 result_radian = norm_rad - ref_angle
-                
-            func = self.__findCallback('refraction')
-            if func != None:
-                func((inc_point, result_radian))  # (折射点， 折射光线角度)
 
         result_radian = regulateRadian(result_radian)
         
         # 创建瞬时光线
         nlight = Light(inc_point, result_radian)
         nlight.transient = True
+        
+        # 检查回调函数
+        func = self.__findCallback(ref_type)
+        if func != None:
+            func(nlight)
+        
         return nlight
     
     def __findCallback(self, tp):
