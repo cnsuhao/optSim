@@ -6,19 +6,21 @@ Created on Jul 26, 2014
 '''
 
 import pygame
+from pygame.locals import QUIT, KEYDOWN, K_SPACE, K_ESCAPE
 
 class Canvas(object):
     '''
     classdocs
     '''
 
-    def __init__(self, w=640, h=480):
+    def __init__(self, w=640, h=480, clr=True):
         '''
         Constructor
         '''
         pygame.init()
         self.width = w
         self.height = h
+        self.clear = clr
         self.screen = pygame.display.set_mode((self.width, self.height), 0, 32)
         pygame.display.set_caption("optsim")
         
@@ -29,7 +31,9 @@ class Canvas(object):
         pass
     
     def draw(self, simulator):
-        self.screen.fill((0, 0, 0))
+        if self.clear:
+            self.screen.fill((0, 0, 0))
+
         lights = simulator.getLights()
         for light in lights:
             self.__drawLight(light)

@@ -4,9 +4,7 @@ Created on Jul 27, 2014
 @author: andy
 '''
 from optsim import *
-import optdraw
-import time
-import math
+import time, math
 
 def refracSpot((pt,rad)):
     print 'Refraction spotted'
@@ -41,11 +39,11 @@ if __name__ == '__main__':
     
     sim.addCallback('refraction', refracSpot)
     
-    odraw=optdraw.OptDraw(600,600)
+    canvas = Canvas(600,600)
     
     while True:
         sim.step()
-        ret=odraw.draw(sim)
+        ret=canvas.draw(sim)
         if ret=='quit':
             break
         time.sleep(0.5)

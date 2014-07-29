@@ -5,9 +5,7 @@ Created on Jul 24, 2014
 '''
 
 from optsim import *
-import optdraw
-import time
-import math, sys
+import math, sys, time
 
 Dis = 30
 Radius = 500
@@ -37,11 +35,11 @@ def simulating(angle):
         lt = Light(pt, math.radians(angle))
         sim.addLight(lt)
         
-    odraw = optdraw.OptDraw(Radius * 2 + 100, Radius * 2 + 100)
+    canvas = Canvas(Radius * 2 + 100, Radius * 2 + 100)
     global __count
     while __count <= 3:
         sim.step()
-        ret = odraw.draw(sim)
+        ret = canvas.draw(sim)
         if ret == 'quit':
             sys.exit()
 #         time.sleep(0.05)

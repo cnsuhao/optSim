@@ -5,7 +5,6 @@ Created on Jul 25, 2014
 '''
 
 from optsim import *
-import optdraw
 import time
 
 
@@ -30,9 +29,9 @@ if __name__ == '__main__':
     sim.addInterface(interface2)
     sim.addInterface(interface3)
     
-    odraw = optdraw.OptDraw(200, 200)
+    canvas = Canvas(200, 200)
     while True:
         sim.step()
 #         print sim
-        odraw.draw(sim)
+        canvas.draw(sim)
         time.sleep(1)

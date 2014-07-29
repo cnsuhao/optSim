@@ -6,9 +6,8 @@ Created on Jul 25, 2014
 '''
 
 from optsim import *
-from math import sin, cos, tan, radians
-import optdraw
 import time, sys
+from math import sin, cos, tan, radians
 
 ################### 可以设置的量
 
@@ -153,12 +152,12 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     
     sim.addCallback('refraction', refracSpot)
     
-    odraw = optdraw.OptDraw(L0 + 100, 600)
+    canvas = Canvas(L0 + 100, 600)
     global __next_config, __paused
     while not __next_config:
         if not __paused:
             sim.step()
-        ret = odraw.draw(sim)
+        ret = canvas.draw(sim)
         if ret == 'quit':
             sys.exit()
         elif ret == 'space':
