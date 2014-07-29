@@ -6,9 +6,8 @@ Created on Jul 26, 2014
 '''
 
 import pygame
-from pygame.locals import *
 
-class OptDraw(object):
+class Canvas(object):
     '''
     classdocs
     '''
@@ -21,7 +20,7 @@ class OptDraw(object):
         self.width = w
         self.height = h
         self.screen = pygame.display.set_mode((self.width, self.height), 0, 32)
-        pygame.display.set_caption("OptDraw")
+        pygame.display.set_caption("optsim")
         
         self.light_color = (255, 255, 150)
         self.interface_color = (100, 100, 150)
