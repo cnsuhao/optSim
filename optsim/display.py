@@ -58,7 +58,7 @@ class Canvas(object):
                     return None
         
     def __drawLight(self, light):
-        if light.hitpoint != None:
+        if light.hitpoint is not None:
             pygame.draw.line(self.screen, self.light_color, self.__traslate(light.origin.toTuple()), self.__traslate(light.hitpoint.toTuple()), int(light.intensity))
         else:
             line = light.toLine()

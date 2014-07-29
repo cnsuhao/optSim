@@ -14,7 +14,7 @@ def equal(v1, v2):
     if v1 == v2:  # inf )== inf
         return True
     else:
-        return math.fabs(v1 - v2) <= epsilon
+        return -epsilon < v1 - v2 < epsilon
 
 def regulateRadian(rad):
     r = rad
@@ -40,10 +40,7 @@ class Point:
         return (self.x, self.y)
 
     def __eq__(self, pt):
-        if not isinstance(pt, Point):
-            return False
-        else:
-            return equal(self.distanceTo(pt), 0.0)
+        return equal(self.x, pt.x) and equal(self.y, pt.y)
         
     def __hash__(self):
         return hash(self.x + self.y)
@@ -69,10 +66,7 @@ class Ray:
         return Line(self.origin, end_point)
 
     def __eq__(self, other):
-        if not isinstance(other, Ray):
-            return False
-        else:
-            return self.origin == other.origin and equal(self.radian, other.radian)
+        return self.origin == other.origin and equal(self.radian, other.radian)
         
     def __hash__(self):
         return hash(self.origin.x + self.origin.y + self.radian)
@@ -151,7 +145,7 @@ class LineSeg:
             else:
                 raise ArithmeticError, "invalid LineSeg: %s" % self
         
-        rad = math.atan(math.fabs(delta_y / delta_x))
+        rad = math.atan(abs(delta_y / delta_x))
         if delta_x > 0 and (delta_y > 0 or equal(delta_y, 0)):  # first quadrant
             return rad
         elif delta_x < 0 and (delta_y > 0 or equal(delta_y, 0)):  # second quadrant
@@ -194,7 +188,7 @@ class Light(Ray):
         line1 = self.toLine()
         line2 = interface.toLine()
         ipt = line1.intersectPoint(line2)
-        if (ipt != None) and (ipt != self.origin):  # 交点需存在且不是光线起点
+        if (ipt is not None) and (ipt != self.origin):  # 交点需存在且不是光线起点
             linesg = LineSeg(self.origin, ipt)
             # 在光线方向上， 在界面上 
             if equal(linesg.radian(), self.radian) and interface.hasPoint(ipt):
@@ -298,7 +292,7 @@ class Simulator:
                     inc_point = ipt
                     inc_interface = interface
         
-        if inc_point == None:
+        if inc_point is None:
             return None
         
         # 计算入射方向法线（射线）
@@ -306,7 +300,7 @@ class Simulator:
         inter_rad = inc_interface.radian()
         candi_norm_rad = inter_rad + math.pi / 2  # 逆时针(左)旋转90度
         candi_norm_rad = regulateRadian(candi_norm_rad)  # 转换到[0,360)
-        delta_rad = math.fabs(candi_norm_rad - light.radian)
+        delta_rad = abs(candi_norm_rad - light.radian)
         if (delta_rad < math.pi / 2) or (delta_rad > math.pi * 3 / 2):  # candi_norm_rad 与 light 同指向
             norm_rad = candi_norm_rad
             r2l = 1  # 从右向左
@@ -315,7 +309,7 @@ class Simulator:
             r2l = 0  # 从左向右
         
         # 计算入射角
-        inc_angle = math.fabs(norm_rad - light.radian)
+        inc_angle = abs(norm_rad - light.radian)
             
         # 根据界面折射率参数，计算折射或反射光线角度
         in_refix = 0.0

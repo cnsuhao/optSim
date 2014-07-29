@@ -8,6 +8,7 @@ Created on Jul 25, 2014
 from optsim import *
 import time, sys
 from math import sin, cos, tan, radians
+import profile
 
 ################### 可以设置的量
 
@@ -165,6 +166,7 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
 #         print sim
         
 if __name__ == '__main__':
+#     profile.run("simulating(20, 1, 30, 2, 30)", "profile.txt")
     # 全部配置
     for alph in alpha_range:
         for h2 in H2_range:
