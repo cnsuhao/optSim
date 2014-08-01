@@ -7,42 +7,46 @@ Created on Jul 25, 2014
 
 from optsim import *
 import time, sys
+import matplotlib.pyplot as plt
 from math import sin, cos, tan, radians
-import profile
 
-################### 可以设置的量
+######################################################################## 可以设置的量
 
 # 结构参数
 L0 = 800  # 水平界面的长度
 L1 = 100  # 下板定长界面的长度
-Division = 100  # 分成一百分，放置光源
+source_number = 100  # 定长界面上放置多少个光源
+angle_range = 30  # 每个光源的光线与法线的夹角范围（角度）
 gap = 1  # 上下板中间间隙
 pmmaidx = 1.5  # PMMA 折射率
+statistics_div = 100  # 统计时下板被分成多少份
 
 # 界面参数，角度
 # 上板
-H1_range = xrange(1, 10, 2)
-eta_range = xrange(20, 70, 5)
-lamb1_range = xrange(20, 70, 5)
+H1_range = xrange(9, 10, 2)  # H1长度变化范围
+eta_range = xrange(40, 70, 5)  # eta角度变化范围
+lamb1_range = xrange(20, 70, 5)  # lamb1角度变化范围
 # 下板
-H2_range = xrange(1, 10, 2)
-alpha_range = xrange(20, 70, 5)
+H2_range = xrange(9, 10, 2)  # H2长度变化范围
+alpha_range = xrange(40, 70, 5)  # alpha角度变化范围
 # lamb2 # 没有用到
 
-light_angle = 30  # 光线与法线夹角范围（包括）
+# 程序控制相关参数
+enable_canvas = True  # 是否显示光线图
+enable_plot = True  # 是否绘制统计图（绘制统计图时需要手动关闭绘图窗口才能继续下个计算）
 
-statistics_div = 100
+########################################################################
 
-####################################
-
-# 　这些参数不要动
+# 运行时参数，不要改
 __next_config = False
 __paused = False
 __detected_out_lights = set()
 __distance_set = set()
 __down_interface = None
 __statistics_length = 0.0
-__total_points = (2 * light_angle + 1) * (Division - 1)
+__total_points = (2 * angle_range + 1) * (source_number)
+
+#===================================
 
 def refracSpot(light):
     global __next_config, __distance_set, __detected_out_lights, __down_interface, __statistics_length, __total_points
@@ -60,7 +64,7 @@ def refracSpot(light):
 #                     print "Stage completed, do the analysis..."
                 # 统计出射点数
                 statistics_result = {}
-                for part in range(0, statistics_div):
+                for part in xrange(0, statistics_div):
                     count = 0
                     dis_start = part * __statistics_length
                     dis_end = dis_start + __statistics_length
@@ -70,28 +74,37 @@ def refracSpot(light):
                     statistics_result[part] = count
                 # 求统计属性
                 (total, mean, variance) = calStatistics(statistics_result.values())
-                print "Hist: %s" % statistics_result.values()
-                print "Total: %s, Mean: %s, Variance: %s" % (total, mean, variance)
+                print "<<< Hist: %s" % statistics_result.values()
+                print "    Total Num: %s, Mean: %s, Var: %s" % (total, mean, variance)
                 
-                # cleanup
+                # 画柱状图
+                if enable_plot:
+                    index = xrange(0, statistics_div)
+                    plt.bar(index, statistics_result.values(), 1, alpha=0.6)
+                    plt.xlabel('Distance')
+                    plt.ylabel('Light Counts')
+                    plt.title('Distribution of lights emiting from the lower interface')
+                    print "关闭画图窗口继续..."
+                    plt.show()
+                
+                # 重置数据，计算下一个
                 __detected_out_lights.clear()
                 __distance_set.clear()
-            
                 __next_config = True
 
 def calStatistics(vals):
-    sum1 = 0.0
-    sum2 = 0.0
+    sum1 = 0
+    sum2 = 0
     for v in vals:
         sum1 += v
         sum2 += v ** 2    
-    mean = sum1 / len(vals)
-    var = sum2 / len(vals) - mean ** 2
+    mean = 1.0 * sum1 / len(vals)
+    var = 1.0 * sum2 / len(vals) - mean ** 2
     return (sum1, mean, var)
 
 def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     global __statistics_length, __down_interface
-    print "Config [alpha: %s, H2: %s, eta: %s, H1: %s, lamb1: %s]" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1)
+    print ">>> Config [alpha: %s, H2: %s, eta: %s, H1: %s, lamb1: %s]" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1)
     # 计算六个点的坐标
     p1 = Point(-L0 / 2.0, 0)
     p2 = Point(L0 / 2.0, 0)
@@ -120,7 +133,7 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     inter6.right_refidx = 9999  # 模拟镜面
     inter8 = Interface(p8, p5)
     inter8.right_refidx = 9999
-    # 间隙两端挡板
+    # 间隙两端的挡板
     inter9 = Interface(p4, p1)
     inter10 = Interface(p5, p2)
     
@@ -129,13 +142,13 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     
     sim = Simulator()
     
-    light_angles_range = range(90 - cur_alpha - light_angle, 90 - cur_alpha + light_angle + 1, 1)  # 所有光线角度
-    for part in range(1, Division):
-        pos_x = (p3.x - p1.x) / Division * part + p1.x 
-        pos_y = (p3.y - p1.y) / Division * part + p1.y
+    light_angles_range = xrange(90 - cur_alpha - angle_range, 90 - cur_alpha + angle_range + 1, 1)  # 所有光线角度
+    for part in xrange(1, source_number + 1):
+        pos_x = (p3.x - p1.x) / (source_number + 1) * part + p1.x 
+        pos_y = (p3.y - p1.y) / (source_number + 1) * part + p1.y
         for angle in light_angles_range:
             lt = Light(Point(pos_x, pos_y), radians(angle))
-            lt.transient = True  # 设置瞬时光源加快计算速度
+            lt.transient = True  # 设置为瞬时光源加快计算速度
             sim.addLight(lt)
     
     sim.addInterface(inter1)
@@ -151,20 +164,24 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     
     sim.addCallback('refraction', refracSpot)
     
-    canvas = Canvas(L0 + 100, 600, False)
+    if enable_canvas:
+        canvas = Canvas(L0 + 100, 600, False)
+        
     global __next_config, __paused
     while not __next_config:
         if not __paused:
             sim.step()
-        ret = canvas.draw(sim)
-        if ret == 'quit':
-            sys.exit()
-        elif ret == 'space':
-            __paused = not __paused
+            
+        # 是否绘制光线图
+        if enable_canvas:
+            ret = canvas.draw(sim)
+            if ret == 'quit':
+                sys.exit()
+            elif ret == 'space':
+                __paused = not __paused
 #         print sim
         
 if __name__ == '__main__':
-#     profile.run("simulating(20, 1, 30, 2, 30)", "profile.txt")
     # 遍历全部配置
     for alph in alpha_range:
         for h2 in H2_range:
@@ -174,5 +191,5 @@ if __name__ == '__main__':
                         __next_config = False
                         start = time.time()
                         simulating(alph, h2, et, h1, lam1)
-                        print "Elapsed Time: ", time.time() - start, " sec"
+                        print "*** Elapsed Time: ", time.time() - start, " sec"
                         print "-------------------------------------------------------------------------"
