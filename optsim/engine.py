@@ -131,20 +131,6 @@ class LineSeg:
         else:
             self.start = pt1
             self.end = pt2
-            # 计算线段的矩形框
-            if self.start.x >= self.end.x:
-                self.__xmax = self.start.x
-                self.__xmin = self.end.x
-            else:
-                self.__xmax = self.end.x
-                self.__xmin = self.start.x
-            
-            if self.start.y >= self.end.y:
-                self.__ymax = self.start.y
-                self.__ymin = self.end.y
-            else:
-                self.__ymax = self.end.y
-                self.__ymin = self.start.y
 
     def length(self):
         return math.sqrt((self.end.x - self.start.x) ** 2 + (self.end.y - self.start.y) ** 2)
@@ -171,15 +157,11 @@ class LineSeg:
             return 2 * math.pi - rad
 
     def hasPoint(self, pt):
-        # 先看点是否在线段的矩形框内，若在，则做进一步比较，否则直接返回否
-        if (self.__xmin <= pt.x <= self.__xmax) and (self.__ymin <= pt.y <= self.__ymax):
-            ac = self.length()
-            ab = self.start.distanceTo(pt)
-            bc = pt.distanceTo(self.end)
-            if equal(ac, (ab + bc)):
-                return True
-            else:
-                return False
+        ac = self.length()
+        ab = self.start.distanceTo(pt)
+        bc = pt.distanceTo(self.end)
+        if equal(ac, (ab + bc)):
+            return True
         else:
             return False
 

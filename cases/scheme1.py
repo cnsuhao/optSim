@@ -50,7 +50,7 @@ def refracSpot(light):
     if not (light.origin.y == 0 or light.origin.y == gap):  # 排除间隙之间的折射
         if not __next_config:
             __detected_out_lights.add(light)
-#             print "%s/%s\r" % (len(__detected_out_lights), total_points)
+#             print "%s/%s\r" % (len(__detected_out_lights), __total_points)
             
             if __down_interface.hasPoint(light.origin):  # 出射点在下底板上
                 dis = light.origin.distanceTo(__down_interface.start)
