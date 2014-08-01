@@ -232,48 +232,48 @@ class Interface(LineSeg):
     
 class Simulator:
     def __init__(self):
-        self.cur_lights = []
-        self.next_lights = []
-        self.interfaces = []
-        self.step_count = 0
-        self.callbacks = {}
+        self.__cur_lights = []
+        self.__next_lights = []
+        self.__interfaces = []
+        self.__step_count = 0
+        self.__callbacks = {}
     
     def addLight(self, light):
-        self.next_lights.append(light)
+        self.__next_lights.append(light)
 
     def addInterface(self, inter):
-        self.interfaces.append(inter)
+        self.__interfaces.append(inter)
         
     def getLights(self):
-        return self.cur_lights
+        return self.__cur_lights
     
     def getInterfaces(self):
-        return self.interfaces
+        return self.__interfaces
 
     def addCallback(self, tp, func):
         '''设置各种类型的回调函数'''
-        self.callbacks[tp] = func
+        self.__callbacks[tp] = func
 
     def step(self):
         # 准备光线列表
-        self.cur_lights = self.next_lights
-        self.next_lights = []
+        self.__cur_lights = self.__next_lights
+        self.__next_lights = []
         
         # 遍历当前所有的光线
-        for light in self.cur_lights:
+        for light in self.__cur_lights:
             # 处理每根光线，每根光线生成一个瞬时光线
             generated_light = self.__handleALight(light)
             if generated_light is not None:
                 light.hitpoint = generated_light.origin  # 设置撞击点
-                self.next_lights.append(generated_light)  # 加入光线列表，供下次迭代使用
+                self.__next_lights.append(generated_light)  # 加入光线列表，供下次迭代使用
             
                 # 检查此光线是否瞬时，若否，则加入光源列表，供下次迭代继续使用
                 if light.transient is not True:
-                    self.next_lights.append(light)
+                    self.__next_lights.append(light)
             else:
                 light.hitpoint = None
         
-        self.step_count += 1
+        self.__step_count += 1
 
     def __handleALight(self, light):
         ''' 返回临时光源 '''
@@ -282,7 +282,7 @@ class Simulator:
         inc_point = None
         inc_interface = None
         # 取所有点中距离光线起点最近的点作为实际入射点
-        for interface in self.interfaces:
+        for interface in self.__interfaces:
             ipt = light.incidencePoint(interface)
             if ipt is not None:  # 有交叉点
                 # 计算到光线起点的距离
@@ -353,27 +353,27 @@ class Simulator:
         return nlight
     
     def __findCallback(self, tp):
-        if self.callbacks.has_key(tp):
-            return self.callbacks[tp]
+        if self.__callbacks.has_key(tp):
+            return self.__callbacks[tp]
         else:
             return None
     
     def __str__(self):
-        string = "------------------ Step: %s ------------------ \n" % self.step_count
-        for light in self.cur_lights:
+        string = "------------------ Step: %s ------------------ \n" % self.__step_count
+        for light in self.__cur_lights:
             string += "%s\n" % light
         
-        for inter in self.interfaces:
+        for inter in self.__interfaces:
             string += "%s\n" % inter
         
         return string
 
     def __repr__(self):
-        string = "------------------ Step: %s ------------------ \n" % self.step_count
-        for light in self.cur_lights:
+        string = "------------------ Step: %s ------------------ \n" % self.__step_count
+        for light in self.__cur_lights:
             string += "%s\n" % light
         
-        for inter in self.interfaces:
+        for inter in self.__interfaces:
             string += "%s\n" % inter
         
         return string
