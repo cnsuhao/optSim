@@ -21,12 +21,12 @@ pmmaidx = 1.5  # PMMA 折射率
 
 # 界面参数，角度
 # 上板
-H1_range = range(1, 10, 2)
-eta_range = range(20, 70, 5)
-lamb1_range = range(20, 70, 5)
+H1_range = xrange(1, 10, 2)
+eta_range = xrange(20, 70, 5)
+lamb1_range = xrange(20, 70, 5)
 # 下板
-H2_range = range(1, 10, 2)
-alpha_range = range(20, 70, 5)
+H2_range = xrange(1, 10, 2)
+alpha_range = xrange(20, 70, 5)
 # lamb2 # 没有用到
 
 light_angle = 30  # 光线与法线夹角范围（包括）
@@ -77,8 +77,6 @@ def refracSpot(light):
                 __detected_out_lights.clear()
                 __distance_set.clear()
             
-#                     print "Done, Next Config..."
-                print "-------------------------------------------------------------------------"
                 __next_config = True
 
 def calStatistics(vals):
@@ -153,7 +151,7 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     
     sim.addCallback('refraction', refracSpot)
     
-    canvas = Canvas(L0 + 100, 600)
+    canvas = Canvas(L0 + 100, 600, False)
     global __next_config, __paused
     while not __next_config:
         if not __paused:
@@ -167,11 +165,14 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
         
 if __name__ == '__main__':
 #     profile.run("simulating(20, 1, 30, 2, 30)", "profile.txt")
-    # 全部配置
+    # 遍历全部配置
     for alph in alpha_range:
         for h2 in H2_range:
             for et in eta_range:
                 for h1 in H1_range:
                     for lam1 in lamb1_range:
                         __next_config = False
+                        start = time.time()
                         simulating(alph, h2, et, h1, lam1)
+                        print "Elapsed Time: ", time.time() - start, " sec"
+                        print "-------------------------------------------------------------------------"
