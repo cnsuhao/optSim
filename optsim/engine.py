@@ -260,23 +260,25 @@ class Simulator:
         self.__cur_lights = self.__next_lights
         self.__next_lights = []
         
-        # 遍历当前所有的光线
-        for light in self.__cur_lights:
-            # 处理每根光线，每根光线生成一个瞬时光线
-            generated_light = self.__handleALight(light)
-            if generated_light is not None:
-                light.hitpoint = generated_light.origin  # 设置撞击点
-                self.__next_lights.append(generated_light)  # 加入光线列表，供下次迭代使用
-            
-                # 检查此光线是否瞬时，若否，则加入光源列表，供下次迭代继续使用
-                if light.transient is not True:
-                    self.__next_lights.append(light)
-            else:
-                light.hitpoint = None
+        # 处理当前所有的光线
+        map(self.__iterateALight, self.__cur_lights)
         
         self.__step_count += 1
 
-    def __handleALight(self, light):
+    def __iterateALight(self, light):
+        # 发射每根光线，获得生成的瞬时光线
+        generated_light = self.__emitALight(light)
+        if generated_light is not None:
+            light.hitpoint = generated_light.origin  # 设置撞击点
+            self.__next_lights.append(generated_light)  # 加入光线列表，供下次迭代使用    
+        else:
+            light.hitpoint = None
+            
+        # 检查此光线是否瞬时，若否，则加入光源列表，供下次迭代继续使用
+        if light.transient is not True:
+            self.__next_lights.append(light)
+
+    def __emitALight(self, light):
         ''' 返回临时光源 '''
         # 计算光线与所有界面的入射点
         min_dis = float('inf')
