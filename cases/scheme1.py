@@ -32,8 +32,8 @@ alpha_range = xrange(40, 70, 5)  # alpha角度变化范围
 # lamb2 # 没有用到
 
 # 程序控制相关参数
-enable_canvas = True  # 是否显示光线图
-enable_plot = True  # 是否绘制统计图（绘制统计图时需要手动关闭绘图窗口才能继续下个计算）
+enable_canvas = False  # 是否显示光线图
+enable_plot = False  # 是否绘制统计图（绘制统计图时需要手动关闭绘图窗口才能继续下个计算）
 
 ########################################################################
 
@@ -74,8 +74,8 @@ def refracSpot(light):
                     statistics_result[part] = count
                 # 求统计属性
                 (total, mean, variance) = calStatistics(statistics_result.values())
-                print "<<< Hist: %s" % statistics_result.values()
-                print "    Total Num: %s, Mean: %s, Var: %s" % (total, mean, variance)
+#                 print "<<< Hist: %s" % statistics_result.values()
+                print "%.1f\t%.1f\t%s\t" % (mean, variance, total),
                 
                 # 画柱状图
                 if enable_plot:
@@ -104,7 +104,7 @@ def calStatistics(vals):
 
 def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     global __statistics_length, __down_interface
-    print ">>> Config [alpha: %s, H2: %s, eta: %s, H1: %s, lamb1: %s]" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1)
+    print "%s\t%s\t%s\t%s\t%s\t" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1),
     # 计算六个点的坐标
     p1 = Point(-L0 / 2.0, 0)
     p2 = Point(L0 / 2.0, 0)
@@ -182,14 +182,17 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
 #         print sim
         
 if __name__ == '__main__':
+    print "Num\tAlpha\tH2\tEta\tH1\tLamb1\tMean\tVar\tTotal\tET(sec)]"
+    count = 0
     # 遍历全部配置
     for alph in alpha_range:
         for h2 in H2_range:
             for et in eta_range:
                 for h1 in H1_range:
                     for lam1 in lamb1_range:
+                        print "%s\t" % count,
                         __next_config = False
                         start = time.time()
                         simulating(alph, h2, et, h1, lam1)
-                        print "*** Elapsed Time: ", time.time() - start, " sec"
-                        print "-------------------------------------------------------------------------"
+                        print "%.2f" % (time.time() - start)
+                        count += 1
