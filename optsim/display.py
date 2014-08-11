@@ -2,6 +2,7 @@
 '''
 Created on Jul 26, 2014
 
+@description This is an optical simulation program written for my lady
 @author: andy
 '''
 

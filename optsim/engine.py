@@ -2,6 +2,7 @@
 '''
 Created on Jul 25, 2014
 
+@brief This is an optical simulation program written for my lady
 @author: andy
 '''
 
@@ -29,9 +30,6 @@ class Point:
     def __init__(self, xpos=0.0, ypos=0.0):
         self.x = xpos * 1.0  # to float
         self.y = ypos * 1.0
-
-    def shift(self, vec):
-        return Point(self.x + vec.u, self.y + vec.v)
 
     def distanceTo(self, pt):
         return math.sqrt((pt.x - self.x) ** 2 + (pt.y - self.y) ** 2)
