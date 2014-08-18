@@ -23,12 +23,12 @@ statistics_div = 100  # 统计时下板被分成多少份
 
 # 界面参数，角度
 # 上板
-H1_range = (x * 0.1 for x in xrange(10, 100, 1))  # H1长度变化范围：1~10, 增长０.1
-eta_range = xrange(40, 70, 5)  # eta角度变化范围
-lamb1_range = xrange(20, 70, 5)  # lamb1角度变化范围
+H1_range = (x / 10.0 for x in xrange(10, 100, 1))  # H1长度变化范围：1~10, 增长０.1
+eta_range = xrange(30, 70, 5)  # eta角度变化范围
+lamb1_range = xrange(30, 70, 5)  # lamb1角度变化范围
 # 下板
-H2_range = (x * 0.1 for x in xrange(10, 100, 1))  # H2长度变化范围：1~10, 增长０.1
-alpha_range = xrange(40, 70, 5)  # alpha角度变化范围
+H2_range = (x / 10.0 for x in xrange(10, 100, 1))  # H2长度变化范围：1~10, 增长０.1
+alpha_range = xrange(30, 70, 5)  # alpha角度变化范围
 # lamb2 # 没有用到
 
 # 程序控制相关参数
@@ -38,6 +38,7 @@ enable_plot = True  # 是否绘制统计图（绘制统计图时需要手动关�
 ########################################################################
 
 # 运行时参数，不要改
+# 为了显示美观作些缩放，缩放不会影响光路
 __scaled_ratio = 800.0 / L0  # 缩放比率
 __scaled_L0 = L0 * __scaled_ratio
 __scaled_L1 = L1 * __scaled_ratio
@@ -72,7 +73,6 @@ def calStatistics(vals):
 
 def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     global __statistics_length, __down_interface, __distance_set
-    print "%s\t%s\t%s\t%s\t%s\t" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1),
     # 计算六个点的坐标
     p1 = Point(-__scaled_L0 / 2.0, 0)
     p2 = Point(__scaled_L0 / 2.0, 0)
@@ -96,11 +96,11 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     inter4 = Interface(p4, p5)
     inter4.left_refidx = pmmaidx
     inter5 = Interface(p4, p6)
-    inter5.right_refidx = 9999
+    inter5.right_refidx = 9999999
     inter6 = Interface(p6, p8)
-    inter6.right_refidx = 9999  # 模拟镜面
+    inter6.right_refidx = 9999999  # 模拟镜面
     inter8 = Interface(p8, p5)
-    inter8.right_refidx = 9999
+    inter8.right_refidx = 9999999
     
     __down_interface = inter3  # 三号板是下底板
     __statistics_length = __down_interface.length() / statistics_div
@@ -182,7 +182,7 @@ if __name__ == '__main__':
             for et in eta_range:
                 for h1 in __scaled_H1_range:
                     for lam1 in lamb1_range:
-                        print "%s\t" % count,
+                        print "%s\t%s\t%s\t%s\t%s\t%s\t" % (count, alph, h2 / __scaled_ratio, et, h1 / __scaled_ratio, lam1),
                         __quit = False
                         start = time.time()
                         simulating(alph, h2, et, h1, lam1)
