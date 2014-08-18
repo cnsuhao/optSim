@@ -159,6 +159,7 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
             (total, mean, variance) = calStatistics(statistics_result.values())
     #                 print "<<< Hist: %s" % statistics_result.values()
             print "%.1f\t%.1f\t%s\t" % (mean, variance, total),
+            sys.stdout.flush()
             
             # 画柱状图
             if enable_plot:
@@ -183,6 +184,7 @@ if __name__ == '__main__':
                 for h1 in __scaled_H1_range:
                     for lam1 in lamb1_range:
                         print "%s\t%s\t%s\t%s\t%s\t%s\t" % (count, alph, h2 / __scaled_ratio, et, h1 / __scaled_ratio, lam1),
+                        sys.stdout.flush()
                         __quit = False
                         start = time.time()
                         simulating(alph, h2, et, h1, lam1)
