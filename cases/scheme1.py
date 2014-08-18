@@ -12,23 +12,22 @@ from math import sin, cos, tan, radians
 
 ######################################################################## 可以设置的量
 
-# 结构参数
-ratio = 1.0  # 缩放比率
-L0 = 800 * ratio  # 水平界面的长度
-L1 = 100 * ratio  # 下板定长界面的长度
+# 结构参数，填写实际长度，单位随意选择，统一即可
+L0 = 100  # 水平界面的长度
+L1 = 15  # 下板定长界面的长度
 source_number = 100  # 定长界面上放置多少个光源
 angle_range = 30  # 每个光源的光线与法线的夹角范围（角度）
-gap = 1 * ratio  # 上下板中间间隙
+gap = 1  # 上下板中间间隙
 pmmaidx = 1.5  # PMMA 折射率
 statistics_div = 100  # 统计时下板被分成多少份
 
 # 界面参数，角度
 # 上板
-H1_range = [x * ratio for x in xrange(9, 10, 2)]  # H1长度变化范围
+H1_range = (x * 0.1 for x in xrange(10, 100, 1))  # H1长度变化范围：1~10, 增长０.1
 eta_range = xrange(40, 70, 5)  # eta角度变化范围
 lamb1_range = xrange(20, 70, 5)  # lamb1角度变化范围
 # 下板
-H2_range = [x * ratio for x in xrange(9, 10, 2)]  # H2长度变化范围
+H2_range = (x * 0.1 for x in xrange(10, 100, 1))  # H2长度变化范围：1~10, 增长０.1
 alpha_range = xrange(40, 70, 5)  # alpha角度变化范围
 # lamb2 # 没有用到
 
@@ -39,6 +38,13 @@ enable_plot = True  # 是否绘制统计图（绘制统计图时需要手动关�
 ########################################################################
 
 # 运行时参数，不要改
+__scaled_ratio = 800.0 / L0  # 缩放比率
+__scaled_L0 = L0 * __scaled_ratio
+__scaled_L1 = L1 * __scaled_ratio
+__scaled_gap = gap * __scaled_ratio 
+__scaled_H1_range = (x * __scaled_ratio for x in H1_range)  # H1长度变化范围
+__scaled_H2_range = (x * __scaled_ratio for x in H2_range)  # H2长度变化范围
+
 __quit = False
 __paused = False
 __distance_set = set()
@@ -53,7 +59,6 @@ def refracSpot(light):
     if __down_interface.hasPoint(light.origin):  # 出射点在下底板上
         dis = light.origin.distanceTo(__down_interface.start)
         __distance_set.add(dis)
-        
 
 def calStatistics(vals):
     sum1 = 0
@@ -69,13 +74,13 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     global __statistics_length, __down_interface, __distance_set
     print "%s\t%s\t%s\t%s\t%s\t" % (cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1),
     # 计算六个点的坐标
-    p1 = Point(-L0 / 2.0, 0)
-    p2 = Point(L0 / 2.0, 0)
-    p3 = Point(cos(radians(cur_alpha)) * L1 - L0 / 2.0, -sin(radians(cur_alpha)) * L1)
-    p4 = Point(p1.x, p1.y + gap)
-    p5 = Point(p2.x, p2.y + gap)
-    a = tan(radians(cur_lamb1)) * (L0 + cur_H1 / tan(radians(cur_lamb1))) / (tan(radians(cur_eta)) + tan(radians(cur_lamb1)))
-    p6 = Point(a * cos(radians(cur_eta)) - L0 / 2.0, a * sin(radians(cur_eta)) + gap)
+    p1 = Point(-__scaled_L0 / 2.0, 0)
+    p2 = Point(__scaled_L0 / 2.0, 0)
+    p3 = Point(cos(radians(cur_alpha)) * __scaled_L1 - __scaled_L0 / 2.0, -sin(radians(cur_alpha)) * __scaled_L1)
+    p4 = Point(p1.x, p1.y + __scaled_gap)
+    p5 = Point(p2.x, p2.y + __scaled_gap)
+    a = tan(radians(cur_lamb1)) * (__scaled_L0 + cur_H1 / tan(radians(cur_lamb1))) / (tan(radians(cur_eta)) + tan(radians(cur_lamb1)))
+    p6 = Point(a * cos(radians(cur_eta)) - __scaled_L0 / 2.0, a * sin(radians(cur_eta)) + __scaled_gap)
     # 新加的右侧挡板上两点
     p7 = Point(p2.x, p2.y - cur_H2)
     p8 = Point(p5.x, p5.y + cur_H1)
@@ -123,7 +128,7 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
     sim.addCallback('refraction', refracSpot)
     
     if enable_canvas:
-        canvas = Canvas(L0 + 100, max(p6.y, -p3.y) * 2 + 50, False)
+        canvas = Canvas(__scaled_L0 + 100, max(p6.y, -p3.y) * 2 + 50, False)
         
     global __quit, __paused
     while not __quit:
@@ -173,9 +178,9 @@ if __name__ == '__main__':
     count = 0
     # 遍历全部配置
     for alph in alpha_range:
-        for h2 in H2_range:
+        for h2 in __scaled_H2_range:
             for et in eta_range:
-                for h1 in H1_range:
+                for h1 in __scaled_H1_range:
                     for lam1 in lamb1_range:
                         print "%s\t" % count,
                         __quit = False
