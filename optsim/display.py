@@ -19,8 +19,8 @@ class Canvas(object):
         Constructor
         '''
         pygame.init()
-        self.width = w
-        self.height = h
+        self.width = int(w)
+        self.height = int(h)
         self.clear = clr
         self.screen = pygame.display.set_mode((self.width, self.height), 0, 32)
         pygame.display.set_caption("optsim")
@@ -63,7 +63,7 @@ class Canvas(object):
             pygame.draw.line(self.screen, self.light_color, self.__traslate(light.origin.toTuple()), self.__traslate(light.hitpoint.toTuple()), int(light.intensity))
         else:
             line = light.toLine()
-            p2_x = (line.point2.x - line.point1.x) * 100 + line.point1.x     # 直线原长是1，延长100倍
+            p2_x = (line.point2.x - line.point1.x) * 100 + line.point1.x  # 直线原长是1，延长100倍
             p2_y = (line.point2.y - line.point1.y) * 100 + line.point1.y
             pygame.draw.line(self.screen, self.light_color, self.__traslate(line.point1.toTuple()), self.__traslate((p2_x, p2_y)), int(light.intensity))
             
