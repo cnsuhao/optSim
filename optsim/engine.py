@@ -26,7 +26,7 @@ def regulateRadian(rad):
             r -= math.pi * 2
     return r
 
-class Point:
+class Point(object):
     def __init__(self, xpos=0.0, ypos=0.0):
         self.x = xpos * 1.0  # to float
         self.y = ypos * 1.0
@@ -54,7 +54,7 @@ class Point:
         string = "<%s, %s>" % (self.x, self.y) 
         return string
 
-class Ray:
+class Ray(object):
     def __init__(self, org=Point(0, 0), rad=0.0):
         self.origin = org
         self.radian = regulateRadian(rad)  # 转换到[0, 360)
@@ -80,7 +80,7 @@ class Ray:
         string = "%s --> (%s)" % (self.origin, self.radian)
         return string
 
-class Line:
+class Line(object):
     def __init__(self, pt1=Point(0, 0), pt2=Point(1, 1)):
         if pt1 == pt2:
             raise ArithmeticError, "invalid Line: %s" % self
@@ -122,7 +122,7 @@ class Line:
         return string
 
 
-class LineSeg:
+class LineSeg(object):
     def __init__(self, pt1=Point(0, 0), pt2=Point(1, 1)):
         if pt1 == pt2:
             raise ArithmeticError, "invalid LineSeg: %s" % self
@@ -232,7 +232,7 @@ class Interface(LineSeg):
 
 ####################### The simulator
     
-class Simulator:
+class Simulator(object):
     def __init__(self):
         self.__cur_lights = []
         self.__next_lights = []

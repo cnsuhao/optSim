@@ -79,8 +79,8 @@ if __name__ == '__main__':
                 stat_result.append(intensity)
                 
             print stat_result  # 打印距离列表
-            input()
             __quit = True  # 退出程序
+            raw_input("按回车键退出")
 
         runCount += 1
             
