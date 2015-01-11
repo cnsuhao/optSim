@@ -1,5 +1,6 @@
 # -*- coding:utf-8 -*-
 from optsim import *
+import matplotlib.pyplot as plt
 import math, sys
 
 L = 120  # 光导长度
@@ -79,6 +80,15 @@ if __name__ == '__main__':
                 stat_result.append(intensity)
                 
             print stat_result  # 打印距离列表
+            
+            # 画柱状图
+            index = xrange(0, statDiv)
+            plt.bar(index, stat_result, 1, alpha=0.6)
+            plt.xlabel('Distance')
+            plt.ylabel('Intensity')
+            plt.title('Distribution of Light Intensity')
+            plt.show()
+            
             __quit = True  # 退出程序
             raw_input("按回车键退出")
 
