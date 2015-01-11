@@ -179,7 +179,10 @@ class LineSeg:
 class Light(Ray):
     def __init__(self, org=Point(0, 0), rad=0.0, inten=1.0):
         Ray.__init__(self, org, rad)
-        self.intensity = inten
+        if not (0 < inten <= 1):
+            raise AttributeError, "Can't set light intensity to %s, the value must be in (0, 1]" % inten
+        
+        self.intensity = inten  # 0~1, 1为最强
         self.transient = False
         self.hitpoint = None
 
@@ -344,6 +347,7 @@ class Simulator:
         
         # 创建瞬时光线
         nlight = Light(inc_point, result_radian)
+        nlight.intensity = light.intensity
         nlight.transient = True
         
         # 检查回调函数

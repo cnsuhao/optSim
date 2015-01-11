@@ -148,13 +148,13 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
             # 统计出射点数
             statistics_result = {}
             for part in xrange(0, statistics_div):
-                count = 0
+                runCount = 0
                 dis_start = part * __statistics_length
                 dis_end = dis_start + __statistics_length
                 for dis in __distance_set:
                     if dis_start <= dis < dis_end:
-                        count += 1
-                statistics_result[part] = count
+                        runCount += 1
+                statistics_result[part] = runCount
             # 求统计属性
             (total, mean, variance) = calStatistics(statistics_result.values())
     #                 print "<<< Hist: %s" % statistics_result.values()
@@ -176,17 +176,17 @@ def simulating(cur_alpha, cur_H2, cur_eta, cur_H1, cur_lamb1):
         
 if __name__ == '__main__':
     print "Num\tAlpha\tH2\tEta\tH1\tLamb1\tMean\tVar\tTotal\tET(sec)]"
-    count = 0
+    runCount = 0
     # 遍历全部配置
     for alph in alpha_range:
         for h2 in __scaled_H2_range:
             for et in eta_range:
                 for h1 in __scaled_H1_range:
                     for lam1 in lamb1_range:
-                        print "%s\t%s\t%s\t%s\t%s\t%s\t" % (count, alph, h2 / __scaled_ratio, et, h1 / __scaled_ratio, lam1),
+                        print "%s\t%s\t%s\t%s\t%s\t%s\t" % (runCount, alph, h2 / __scaled_ratio, et, h1 / __scaled_ratio, lam1),
                         sys.stdout.flush()
                         __quit = False
                         start = time.time()
                         simulating(alph, h2, et, h1, lam1)
                         print "%.2f" % (time.time() - start)
-                        count += 1
+                        runCount += 1

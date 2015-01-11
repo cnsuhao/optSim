@@ -25,7 +25,6 @@ class Canvas(object):
         self.screen = pygame.display.set_mode((self.width, self.height), 0, 32)
         pygame.display.set_caption("optsim")
         
-        self.light_color = (255, 255, 150)
         self.interface_color = (100, 100, 150)
         
     def __draw_axis__(self):
@@ -60,12 +59,12 @@ class Canvas(object):
         
     def __drawLight(self, light):
         if light.hitpoint is not None:
-            pygame.draw.line(self.screen, self.light_color, self.__traslate(light.origin.toTuple()), self.__traslate(light.hitpoint.toTuple()), int(light.intensity))
+            pygame.draw.line(self.screen, self.__ColorForLightIntensity(light.intensity), self.__traslate(light.origin.toTuple()), self.__traslate(light.hitpoint.toTuple()), 1)
         else:
             line = light.toLine()
             p2_x = (line.point2.x - line.point1.x) * 100 + line.point1.x  # 直线原长是1，延长100倍
             p2_y = (line.point2.y - line.point1.y) * 100 + line.point1.y
-            pygame.draw.line(self.screen, self.light_color, self.__traslate(line.point1.toTuple()), self.__traslate((p2_x, p2_y)), int(light.intensity))
+            pygame.draw.line(self.screen, self.__ColorForLightIntensity(light.intensity), self.__traslate(line.point1.toTuple()), self.__traslate((p2_x, p2_y)), 1)
             
     def __drawInterface(self, inter):
         pygame.draw.line(self.screen, self.interface_color, self.__traslate(inter.start.toTuple()), self.__traslate(inter.end.toTuple()), 2)
@@ -73,4 +72,10 @@ class Canvas(object):
         
     def __traslate(self, real_pos):
         return (self.width / 2.0 + real_pos[0], self.height / 2.0 - real_pos[1])
+    
+    def  __ColorForLightIntensity(self, inten):
+        '''inten (0, 1] => (0, 255]'''
+        R = G = int(inten * 255)
+        B = int(inten * 50)
+        return (R, G, B)
         
